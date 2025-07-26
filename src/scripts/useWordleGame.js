@@ -1,146 +1,166 @@
-﻿import { ref, computed } from 'vue'
+﻿/*jslint browser, node*/
+import { ref, computed } from "vue";
 
 const GAME_CONFIG = Object.freeze({
     MAX_ATTEMPTS: 6,
     WORD_LENGTH: 5,
-    WORD_LIST_PATH: '/valid-wordle-words.txt',
-})
+    WORD_LIST_PATH: "/valid-wordle-words.txt"
+});
 
 export function useWordleGame() {
-    const boardState = ref([])
-    const currentRowIndex = ref(0)
-    const currentColIndex = ref(0)
+    const boardState = ref([]);
+    const currentRowIndex = ref(0);
+    const currentColIndex = ref(0);
     /** @type {import('vue').Ref<string[]>} */
-    const allowedWords = ref([])
+    const allowedWords = ref([]);
     /** @type {import('vue').Ref<string>} */
-    const targetWord = ref('')
-    const targetLetters = computed(() => targetWord.value.split(''))
+    const targetWord = ref("");
+    const targetLetters = computed(() => targetWord.value.split(""));
 
     const gameStatus = ref({
         won: false,
         over: false,
-        message: '',
-        showSnackbar: false,
-    })
+        message: "",
+        showSnackbar: false
+    });
 
-    function setGameStatus({ won = false, over = false, message = '', showSnackbar = true }) {
-        gameStatus.value = { won, over, message, showSnackbar }
+    function setGameStatus(
+        { won = false, over = false, message = "", showSnackbar = true }) {
+        gameStatus.value = { won, over, message, showSnackbar };
     }
 
-    async function loadAllowedWords() {
+    async function loadAllowedWords () {
         try {
-            const res = await fetch(GAME_CONFIG.WORD_LIST_PATH)
+            const res = await fetch(GAME_CONFIG.WORD_LIST_PATH);
             if (!res.ok) {
-                setGameStatus({ message: 'Failed to load word list.' })
-                console.error('Bad response:', res.status)
-                return
+                setGameStatus({ message: "Failed to load word list." });
+                console.error("Bad response:", res.status);
+                return;
             }
-            const text = await res.text()
+            const text = await res.text();
             allowedWords.value = text
-                .split('\n')
-                .map(word => word.trim().toUpperCase())
-                .filter(word => word.length === GAME_CONFIG.WORD_LENGTH)
+                .split("\n")
+                .map((word) => word.trim().toUpperCase())
+                .filter((word) => word.length === GAME_CONFIG.WORD_LENGTH);
 
-            targetWord.value = allowedWords.value[Math.floor(Math.random() * allowedWords.value.length)]
+            targetWord.value = allowedWords.value
+                [Math.floor(Math.random() * allowedWords.value.length)];
         } catch (error) {
-            setGameStatus({ message: 'Error loading word list.' })
-            console.error(error)
+            setGameStatus({ message: "Error loading word list." });
+            console.error(error);
         }
     }
 
     function initializeBoard() {
-        boardState.value = Array.from({ length: GAME_CONFIG.MAX_ATTEMPTS }, () =>
-            Array.from({ length: GAME_CONFIG.WORD_LENGTH }, () => ({ letter: '', status: '' }))
-        )
+        boardState.value = Array.from(
+            { length: GAME_CONFIG.MAX_ATTEMPTS }, () =>
+            Array.from({ length: GAME_CONFIG.WORD_LENGTH }, () => (
+                { letter: "", status: "" }))
+        );
     }
 
     async function resetGame() {
-        initializeBoard()
-        currentRowIndex.value = 0
-        currentColIndex.value = 0
-        setGameStatus({ message: '', showSnackbar: false })
-        await loadAllowedWords()
+        initializeBoard();
+        currentRowIndex.value = 0;
+        currentColIndex.value = 0;
+        setGameStatus({ message: "", showSnackbar: false });
+        await loadAllowedWords();
     }
 
     function insertLetter(letter) {
 
-        const row = currentRowIndex.value
-        const col = currentColIndex.value
+        const row = currentRowIndex.value;
+        const col = currentColIndex.value;
 
-        if (!/^[A-Z]$/.test(letter)) return
-        if (row >= GAME_CONFIG.MAX_ATTEMPTS || col >= GAME_CONFIG.WORD_LENGTH) return
+        if (!(/^[A-Z]$/).test(letter))  {
+            return;
+        }
+        if (row >= GAME_CONFIG.MAX_ATTEMPTS || col >= GAME_CONFIG.WORD_LENGTH) {
+            return;
+        }
 
-        boardState.value[row][col].letter = letter
-        currentColIndex.value++
+        boardState.value[row][col].letter = letter;
+        currentColIndex.value += 1;
 
     }
 
     function removeLetter() {
-        const row = currentRowIndex.value
-        const col = currentColIndex.value - 1
+        const row = currentRowIndex.value;
+        const col = currentColIndex.value - 1;
 
-        if (col < 0) return
+        if (col < 0)  {
+            return;
+        }
 
-        boardState.value[row][col] = { letter: '', status: '' }
-        currentColIndex.value--
+        boardState.value[row][col] = { letter: "", status: "" };
+        currentColIndex.value -= 1;
     }
 
     function validateGuess() {
-        const guess = boardState.value[currentRowIndex.value].map(t => t.letter).join('')
-        return allowedWords.value.includes(guess)
+        const guess = boardState.value[currentRowIndex.value]
+            .map((t) => t.letter).join("");
+        return allowedWords.value.includes(guess);
     }
 
     function evaluateGuess() {
-        const guessTiles = boardState.value[currentRowIndex.value]
-        const answerCopy = [...targetLetters.value]
+        const guessTiles = boardState.value[currentRowIndex.value];
+        const answerCopy = [...targetLetters.value];
 
         // Correct positions
-        guessTiles.forEach((tile, i) => {
+        guessTiles.forEach(function(tile, i)  {
             if (tile.letter === targetLetters.value[i]) {
-                tile.status = 'correct'
-                answerCopy[i] = null
+                tile.status = "correct";
+                answerCopy[i] = null;
             }
-        })
+        });
 
         // Present letters
-        guessTiles.forEach((tile) => {
-            if (tile.status === '') {
-                const index = answerCopy.indexOf(tile.letter)
-                if (index !== -1) {
-                    tile.status = 'present'
-                    answerCopy[index] = null
-                } else {
-                    tile.status = 'absent'
-                }
+        guessTiles.forEach(function (tile) {
+        if (tile.status === "") {
+            const index = answerCopy.indexOf(tile.letter);
+            if (index !== -1) {
+                tile.status = "present";
+                answerCopy[index] = null;
+            } else {
+                tile.status = "absent";
             }
-        })
+        }
+    });
     }
 
     function handleGuessSubmit() {
-        if (currentColIndex.value !== GAME_CONFIG.WORD_LENGTH) return
+        if (currentColIndex.value !== GAME_CONFIG.WORD_LENGTH) {
+            return;
+        }
 
         if (!validateGuess()) {
-            setGameStatus({ message: 'Invalid word.' })
-            return
+            setGameStatus({ message: "Invalid word." });
+            return;
         }
 
-        evaluateGuess()
+        evaluateGuess();
 
-        const correct = boardState.value[currentRowIndex.value].every(tile => tile.status === 'correct')
+        const correct = boardState.value[currentRowIndex.value]
+            .every((tile) => tile.status === "correct");
         if (correct) {
-            setGameStatus({ won: true, over: true, message: 'You won!' })
-            return
+            setGameStatus({ won: true, over: true, message: "You won!" });
+            setTimeout(() => resetGame(), 3000);
+            return;
         }
 
-        currentRowIndex.value++
-        currentColIndex.value = 0
+        currentRowIndex.value += 1;
+        currentColIndex.value = 0;
 
         if (currentRowIndex.value >= GAME_CONFIG.MAX_ATTEMPTS) {
-            setGameStatus({ over: true, message: `Game Over. Word was: ${targetWord.value}` })
+            setGameStatus(
+                { over: true
+                    , message: `Game Over. Word was: ${targetWord.value}`});
+            setTimeout(() => resetGame(), 3000);
         }
+
     }
 
-    return {
+    return ({
         boardState,
         currentRowIndex,
         currentColIndex,
@@ -150,6 +170,6 @@ export function useWordleGame() {
         handleGuessSubmit,
         resetGame,
         loadAllowedWords,
-        initializeBoard,
-    }
+        initializeBoard
+    });
 }
