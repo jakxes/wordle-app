@@ -144,6 +144,7 @@ export function useWordleGame() {
             .every((tile) => tile.status === "correct");
         if (correct) {
             setGameStatus({ won: true, over: true, message: "You won!" });
+            setTimeout(() => resetGame(), 3000);
             return;
         }
 
@@ -154,7 +155,9 @@ export function useWordleGame() {
             setGameStatus(
                 { over: true
                     , message: `Game Over. Word was: ${targetWord.value}`});
+            setTimeout(() => resetGame(), 3000);
         }
+
     }
 
     return ({
