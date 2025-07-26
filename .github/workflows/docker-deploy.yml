@@ -1,4 +1,6 @@
 name: Deploy on Release
+permissions:
+  contents: read
 
 on:
   release:
